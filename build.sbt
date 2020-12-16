@@ -1,6 +1,6 @@
 scalaVersion := "2.13.4"
 organization := "com.lihaoyi"
-name := "requests-scala"
+name := "requests"
 libraryDependencies += "com.lihaoyi" %% "geny" % "0.6.2"
 libraryDependencies += "com.lihaoyi" %% "utest" % "0.7.5" % Test
 libraryDependencies += "com.lihaoyi" %% "ujson" % "1.2.2" % Test
