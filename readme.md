@@ -1,4 +1,4 @@
-# Requests-Scala 0.6.5
+# Requests-Scala 0.8.0
 
 [![Join the chat at https://gitter.im/lihaoyi/requests-scala](https://badges.gitter.im/lihaoyi/requests-scala.svg)](https://gitter.im/lihaoyi/requests-scala?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
@@ -12,7 +12,7 @@ If you use Requests-Scala and like it, you will probably enjoy the following boo
 - [*Hands-on Scala Programming*](https://www.handsonscala.com/)
 
 *Hands-on Scala* has uses Requests-Scala extensively throughout the book, and has
-the entirety of *Chapter 12: Working with HTTP APIs* dedicated to 
+the entirety of *Chapter 12: Working with HTTP APIs* dedicated to
 the library. *Hands-on Scala* is a great way to level up your skills in Scala
 in general and Requests-Scala in particular.
 
@@ -26,29 +26,48 @@ For a hands-on introduction to this library, take a look at the following blog p
 
 ## Contents
 
-- [Making a Request](#making-a-request)
+- [Requests-Scala 0.8.0](#requests-scala-080)
+  - [Contents](#contents)
+  - [Getting Started](#getting-started)
+  - [Making a Request](#making-a-request)
     - [Passing in Parameters](#passing-in-parameters)
     - [Response Content](#response-content)
-- [Streaming Requests](#streaming-requests)
-- [Multipart Uploads](#multipart-uploads)
-- [Misc Configuration](#misc-configuration)
+  - [Streaming Requests](#streaming-requests)
+  - [Handling JSON](#handling-json)
+  - [Multipart Uploads](#multipart-uploads)
+  - [Misc Configuration](#misc-configuration)
     - [Custom Headers](#custom-headers)
     - [Timeouts](#timeouts)
     - [Compression](#compression)
     - [Cookies](#cookies)
     - [Redirects](#redirects)
     - [Client Side Certificates](#client-side-certificates)
-- [Sessions](#sessions)
-- [Why Requests-Scala?](#why-requests-scala)
+  - [Sessions](#sessions)
+  - [Why Requests-Scala?](#why-requests-scala)
+  - [Changelog](#changelog)
+    - [0.8.0](#080)
+    - [0.7.1](#071)
+    - [0.7.0](#070)
+    - [0.6.7](#067)
+    - [0.6.5](#065)
+    - [0.5.1](#051)
+    - [0.4.7](#047)
+    - [0.3.0](#030)
+    - [0.2.0](#020)
+    - [0.1.9](#019)
+    - [0.1.8](#018)
+    - [0.1.7](#017)
+    - [0.1.6](#016)
+    - [0.1.5](#015)
 
 ## Getting Started
 
 Use the following import to get you started:
 
 ```scala
-ivy"com.lihaoyi::requests:0.6.5" // mill
-"com.lihaoyi" %% "requests" % "0.6.5" // sbt
-compile "com.lihaoyi:requests_2.12:0.6.5" //gradle
+ivy"com.lihaoyi::requests:0.8.0" // mill
+"com.lihaoyi" %% "requests" % "0.8.0" // sbt
+compile "com.lihaoyi:requests_2.12:0.8.0" //gradle
 ```
 
 ## Making a Request
@@ -81,13 +100,17 @@ val r = requests.delete("http://httpbin.org/delete")
 val r = requests.head("http://httpbin.org/head")
 
 val r = requests.options("http://httpbin.org/get")
+
+// dynamically choose what HTTP method to use
+val r = requests.send("put")("http://httpbin.org/put", data = Map("key" -> "value"))
+
 ```
 
 ### Passing in Parameters
 
 ```scala
 val r = requests.get(
-    "http://httpbin.org/get", 
+    "http://httpbin.org/get",
     params = Map("key1" -> "value1", "key2" -> "value2")
 )
 ```
@@ -112,10 +135,10 @@ requests.post("https://httpbin.org/post", data = java.nio.file.Paths.get("thing.
 ```
 
 The `data` parameter also supports anything that implements the
-[Writable](https://github.com/lihaoyi/geny#writable) interface, such as
-[ujson.Value](http://www.lihaoyi.com/upickle/#uJson)s,
-[uPickle](http://www.lihaoyi.com/upickle)'s `upickle.default.writable` values,
-or [Scalatags](http://www.lihaoyi.com/scalatags/)'s `Tag`s
+[Writable](https://github.com/com-lihaoyi/geny#writable) interface, such as
+[ujson.Value](http://com-lihaoyi.github.io/upickle/#uJson)s,
+[uPickle](http://com-lihaoyi.github.io/upickle)'s `upickle.default.writable` values,
+or [Scalatags](http://com-lihaoyi.github.io/scalatags/)'s `Tag`s
 
 ### Response Content
 
@@ -162,8 +185,8 @@ Requests exposes the `requests.get.stream` (and equivalent
 perform streaming uploads/downloads without needing to load the entire
 request/response into memory. This is useful if you are upload/downloading large
 files or data blobs. `.stream` returns a
-[Readable](https://github.com/lihaoyi/geny#readable) value, that can be then
-passed to methods like [os.write](https://github.com/lihaoyi/os-lib#oswrite),
+[Readable](https://github.com/com-lihaoyi/geny#readable) value, that can be then
+passed to methods like [os.write](https://github.com/com-lihaoyi/os-lib#oswrite),
 `fastparse.parse` or `upickle.default.read` to handle the received data in a
 streaming fashion:
 
@@ -191,9 +214,9 @@ too big to fit in memory, while still benefiting from most of Requests' friendly
 
 ## Handling JSON
 
-Requests does not provide any built-in JSON support, but you can easily use a 
-third-party JSON library to work with it. This example shows how to use 
-[uJson](http://www.lihaoyi.com/upickle/) talk to a HTTP endpoint that requires a 
+Requests does not provide any built-in JSON support, but you can easily use a
+third-party JSON library to work with it. This example shows how to use
+[uJson](https://com-lihaoyi.github.io/upickle/) talk to a HTTP endpoint that requires a
 JSON-formatted body, either using `upickle.default.stream`:
 
 ```scala
@@ -232,7 +255,7 @@ json.arr(0).obj.keys
 
 While Requests-Scala doesn't come bundled with JSON functionality, it is trivial
 to use it together with any other 3rd party JSON library (I like
-[uJson](http://www.lihaoyi.com/upickle/)) So just pick whatever library you
+[uJson](https://github.com/com-lihaoyi/upickle)) So just pick whatever library you
 want.
 
 ## Multipart Uploads
@@ -243,9 +266,9 @@ val r = requests.post(
   data = requests.MultiPart(
     requests.MultiItem("name", new java.io.File("build.sc"), "file.txt"),
     // you can upload strings, and file name is optional
-    requests.MultiItem("name2", "Hello"), 
+    requests.MultiItem("name2", "Hello"),
     // bytes arrays are ok too
-    requests.MultiItem("name3", Array[Byte](1, 2, 3, 4)) 
+    requests.MultiItem("name3", Array[Byte](1, 2, 3, 4))
   )
 )
 ```
@@ -280,7 +303,7 @@ requests.get("https://httpbin.org/delay/1", readTimeout = 10)
 // TimeoutException
 
 requests.get("https://httpbin.org/delay/1", readTimeout = 1500)
-// ok 
+// ok
 
 requests.get("https://httpbin.org/delay/3", readTimeout = 1500)
 // TimeoutException
@@ -490,7 +513,7 @@ headers, cookies or other things:
 
 ```scala
 val s = requests.Session(
-  headers = Map("x-special-header" -> "omg"), 
+  headers = Map("x-special-header" -> "omg"),
   cookieValues = Map("cookie" -> "vanilla")
 )
 
@@ -510,7 +533,7 @@ r2.text
 There is a whole zoo of HTTP clients in the Scala ecosystem. Akka-http, Play-WS,
 STTP, HTTP4S, Scalaj-HTTP, RosHTTP, Dispatch. Nevertheless, none of them come
 close to the ease and weightlessness of using Kenneth Reitz's
-[Requests](http://docs.python-requests.org/) library: too many implicits,
+[Requests](https://requests.readthedocs.io/en/latest/) library: too many implicits,
 operators, builders, monads, and other things.
 
 When I want to make a HTTP request, I do not want to know about
@@ -531,7 +554,7 @@ common Scala HTTP clients:
 ```scala
 // Requests-Scala
 val r = requests.get(
-  "https://api.github.com/search/repositories", 
+  "https://api.github.com/search/repositories",
   params = Map("q" -> "http language:scala", "sort" -> "stars")
 )
 
@@ -611,20 +634,16 @@ httpClient.expect[String](request)
 ```
 ```scala
 // sttp
-import com.softwaremill.sttp._
+import sttp.client3._
 
-val sort: Option[String] = None
-val query = "http language:scala"
+val request = basicRequest.response(asStringAlways)
+  .get(uri"https://api.github.com/search"
+    .addParams(Map("q" -> "http language:scala", "sort" -> "stars")))
 
-// the `query` parameter is automatically url-encoded
-// `sort` is removed, as the value is not defined
-val request = sttp.get(uri"https://api.github.com/search/repositories?q=$query&sort=$sort")
-  
-implicit val backend = HttpURLConnectionBackend()
-val response = request.send()
+val backend = HttpURLConnectionBackend()
+val response = backend.send(request)
 
-// response.unsafeBody: by default read into a String 
-println(response.unsafeBody)                     
+println(response.body)
 ```
 ```scala
 // Dispatch
@@ -639,7 +658,7 @@ request is just a function call that takes parameters; that is all you need to
 know.
 
 As it turns out, Kenneth Reitz's Requests is
-[not a lot of code](https://github.com/requests/requests/tree/master/requests).
+[not a lot of code](https://github.com/requests/requests/tree/main/requests).
 Most of the heavy lifting is done in other libraries, and his library is a just
 thin-shim that makes the API 10x better. It turns out on the JVM most of the
 heavy lifting is also done for you, by `java.net.HttpUrlConnection` in the
@@ -655,6 +674,24 @@ polished, but you should definitely try it out as the HTTP client for your next
 codebase or project!
 
 ## Changelog
+
+### 0.8.0
+
+- Update Geny to 1.0.0 [#120](https://github.com/com-lihaoyi/requests-scala/pull/120)
+
+### 0.7.1
+
+- Fix issue with data buffers not being flushed when compression is enabled [#108](https://github.com/com-lihaoyi/requests-scala/pull/108)
+
+### 0.7.0
+
+- Allow `requests.send(method)(...)` to dynamically choose a HTTP method [#94](https://github.com/com-lihaoyi/requests-scala/pull/94)
+- Avoid crashing on gzipped HEAD requests [#95](https://github.com/com-lihaoyi/requests-scala/pull/95)
+- All exceptions now inherit from a `RequestsException` base class
+
+### 0.6.7
+
+- Add support for Scala 3.0.0-RC2
 
 ### 0.6.5
 

@@ -3,15 +3,12 @@ package requests
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, OutputStream}
 import java.net.{HttpCookie, HttpURLConnection, InetSocketAddress}
 import java.util.zip.{GZIPInputStream, InflaterInputStream}
-
 import javax.net.ssl._
-
 import collection.JavaConverters._
 import scala.collection.mutable
 
 trait BaseSession{
   def headers: Map[String, String]
-
   def cookies: mutable.Map[String, HttpCookie]
   def readTimeout: Int
   def connectTimeout: Int
@@ -34,6 +31,8 @@ trait BaseSession{
   lazy val options = Requester("OPTIONS", this)
   // unofficial
   lazy val patch = Requester("PATCH", this)
+
+  def send(method: String) = Requester(method, this)
 }
 
 object BaseSession{
@@ -54,7 +53,7 @@ object Requester{
 }
 case class Requester(verb: String,
                      sess: BaseSession){
-
+  private val upperCaseVerb = verb.toUpperCase
 
   /**
     * Makes a single HTTP request, and returns a [[Response]] object. Requires
@@ -191,20 +190,19 @@ case class Requester(verb: String,
           case c: HttpsURLConnection =>
             if (cert != null) {
               c.setSSLSocketFactory(Util.clientCertSocketFactory(cert, verifySslCerts))
-              if (!verifySslCerts) c.setHostnameVerifier((_: String, _: SSLSession) => true)
+              if (!verifySslCerts) c.setHostnameVerifier(new HostnameVerifier { def verify(h: String, s: SSLSession) = true })
             } else if (sslContext != null) {
               c.setSSLSocketFactory(sslContext.getSocketFactory)
-              if (!verifySslCerts) c.setHostnameVerifier((_: String, _: SSLSession) => true)
+              if (!verifySslCerts) c.setHostnameVerifier(new HostnameVerifier { def verify(h: String, s: SSLSession) = true })
             } else if (!verifySslCerts) {
               c.setSSLSocketFactory(Util.noVerifySocketFactory)
-              c.setHostnameVerifier((_: String, _: SSLSession) => true)
+              c.setHostnameVerifier(new HostnameVerifier { def verify(h: String, s: SSLSession) = true })
             }
             c
           case c: HttpURLConnection => c
         }
 
         connection.setInstanceFollowRedirects(false)
-        val upperCaseVerb = verb.toUpperCase
         if (Requester.officialHttpMethods.contains(upperCaseVerb)) {
           connection.setRequestMethod(upperCaseVerb)
         } else {
@@ -247,20 +245,21 @@ case class Requester(verb: String,
           connection.setRequestProperty(
             "Cookie",
             allCookies
-              .map{case (k, v) => k + "=" + v}
+              .map{case (k, v) => s"""$k="$v""""}
               .mkString("; ")
           )
-        }
-        if (verb.toUpperCase == "POST" || verb.toUpperCase == "PUT" || verb.toUpperCase == "PATCH" || verb.toUpperCase == "DELETE") {
+        }      
+
+        if (upperCaseVerb == "POST" || upperCaseVerb == "PUT" || upperCaseVerb == "PATCH" || upperCaseVerb == "DELETE") {
           if (!chunkedUpload) {
             val bytes = new ByteArrayOutputStream()
-            data.write(compress.wrap(bytes))
+            usingOutputStream(compress.wrap(bytes)) { os => data.write(os) }
             val byteArray = bytes.toByteArray
             connection.setFixedLengthStreamingMode(byteArray.length)
-            if (byteArray.nonEmpty) connection.getOutputStream.write(byteArray)
+            usingOutputStream(connection.getOutputStream) { os => os.write(byteArray) }
           } else {
             connection.setChunkedStreamingMode(0)
-            data.write(compress.wrap(connection.getOutputStream))
+            usingOutputStream(compress.wrap(connection.getOutputStream)) { os => data.write(os) }
           }
         }
 
@@ -281,7 +280,6 @@ case class Requester(verb: String,
 
         val deGzip = autoDecompress && headerFields.get("content-encoding").toSeq.flatten.exists(_.contains("gzip"))
         val deDeflate = autoDecompress && headerFields.get("content-encoding").toSeq.flatten.exists(_.contains("deflate"))
-
         def persistCookies() = {
           if (sess.persistCookies) {
             headerFields
@@ -331,7 +329,11 @@ case class Requester(verb: String,
             else connection.getErrorStream
 
           def processWrappedStream[V](f: java.io.InputStream => V): V = {
-            if (stream != null) {
+            // The HEAD method is identical to GET except that the server
+            // MUST NOT return a message-body in the response.
+            // https://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html section 9.4
+            if (upperCaseVerb == "HEAD") f(new ByteArrayInputStream(Array()))
+            else if (stream != null) {
               try f(
                 if (deGzip) new GZIPInputStream(stream)
                 else if (deDeflate) new InflaterInputStream(stream)
@@ -363,6 +365,9 @@ case class Requester(verb: String,
       }
     }
   }
+ 
+  private def usingOutputStream[T](os: OutputStream)(fn: OutputStream => T): Unit = 
+    try fn(os) finally os.close()
 
   /**
     * Overload of [[Requester.apply]] that takes a [[Request]] object as configuration
