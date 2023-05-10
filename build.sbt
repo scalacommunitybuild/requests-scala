@@ -7,4 +7,5 @@ libraryDependencies += "com.lihaoyi" %% "ujson" % "1.3.13" % Test
 testFrameworks := Seq(new TestFramework("utest.runner.Framework"))
 Compile / unmanagedSourceDirectories += baseDirectory.value / "requests" / "src"
 Test / unmanagedSourceDirectories += baseDirectory.value / "requests" / "test" / "src"
+Test / unmanagedSourceDirectories += baseDirectory.value / "requests" / "test" / "src-2"
 Compile / scalacOptions ++= Seq("-feature", "-deprecation")
