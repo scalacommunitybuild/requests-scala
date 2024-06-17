@@ -1,4 +1,4 @@
-# Requests-Scala 0.8.0
+# Requests-Scala 0.9.0-RC1
 
 [![Join the chat at https://gitter.im/lihaoyi/requests-scala](https://badges.gitter.im/lihaoyi/requests-scala.svg)](https://gitter.im/lihaoyi/requests-scala?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
@@ -26,7 +26,7 @@ For a hands-on introduction to this library, take a look at the following blog p
 
 ## Contents
 
-- [Requests-Scala 0.8.0](#requests-scala-080)
+- [Requests-Scala 0.8.3](#requests-scala-081)
   - [Contents](#contents)
   - [Getting Started](#getting-started)
   - [Making a Request](#making-a-request)
@@ -65,9 +65,9 @@ For a hands-on introduction to this library, take a look at the following blog p
 Use the following import to get you started:
 
 ```scala
-ivy"com.lihaoyi::requests:0.8.0" // mill
-"com.lihaoyi" %% "requests" % "0.8.0" // sbt
-compile "com.lihaoyi:requests_2.12:0.8.0" //gradle
+ivy"com.lihaoyi::requests:0.9.0-RC1" // mill
+"com.lihaoyi" %% "requests" % "0.9.0-RC1" // sbt
+compile "com.lihaoyi:requests_2.12:0.9.0-RC1" //gradle
 ```
 
 ## Making a Request
@@ -660,11 +660,9 @@ know.
 As it turns out, Kenneth Reitz's Requests is
 [not a lot of code](https://github.com/requests/requests/tree/main/requests).
 Most of the heavy lifting is done in other libraries, and his library is a just
-thin-shim that makes the API 10x better. It turns out on the JVM most of the
-heavy lifting is also done for you, by `java.net.HttpUrlConnection` in the
-simplest case, and other libraries like
-[AsyncHttpClient](https://github.com/AsyncHttpClient/async-http-client) for more
-advanced use cases.
+thin-shim that makes the API 10x better. Similarly, it turns out on the JVM most of the
+heavy lifting is also done for you. There have always been options, but
+since JDK 11 a decent HTTP client is provided in the standard library.
 
 Given that's the case, how hard can it be to port over a dozen Python files to
 Scala? This library attempts to do that: class by class, method by method,
@@ -674,6 +672,20 @@ polished, but you should definitely try it out as the HTTP client for your next
 codebase or project!
 
 ## Changelog
+
+### 0.9.0-RC1
+
+- Use JDK 11 HttpClient ([#158](https://github.com/com-lihaoyi/requests-scala/pull/158)). Note
+  that this means we are dropping compatibility with JDK 8, and will require JDK 11 and above
+  going forward. People who need to use JDK 8 can continue using version 0.8.3
+
+### 0.8.3
+
+- Fix handling of HTTP 304 ([#159](https://github.com/com-lihaoyi/requests-scala/pull/159))
+
+### 0.8.2
+
+- fix: content type header not present in multipart item ([#154](https://github.com/com-lihaoyi/requests-scala/pull/154))
 
 ### 0.8.0
 
