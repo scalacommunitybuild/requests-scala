@@ -1,4 +1,4 @@
-scalaVersion := "2.13.10"
+scalaVersion := "2.13.14"
 organization := "com.lihaoyi"
 name := "requests"
 libraryDependencies += "com.lihaoyi" %% "geny" % "1.0.0"
