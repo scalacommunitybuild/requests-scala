@@ -4,6 +4,7 @@ name := "requests"
 libraryDependencies += "com.lihaoyi" %% "geny" % "1.0.0"
 libraryDependencies += "com.lihaoyi" %% "utest" % "0.7.10" % Test
 libraryDependencies += "com.lihaoyi" %% "ujson" % "1.3.13" % Test
+libraryDependencies += "com.dimafeng" %% "testcontainers-scala-core" % "0.41.3" % Test
 testFrameworks := Seq(new TestFramework("utest.runner.Framework"))
 Compile / unmanagedSourceDirectories += baseDirectory.value / "requests" / "src"
 Test / unmanagedSourceDirectories += baseDirectory.value / "requests" / "test" / "src"
